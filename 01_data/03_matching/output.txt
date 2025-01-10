@@ -1,0 +1,12 @@
+CN matched min/max: 55.7/91.5
+AD matched min/max: 56.3/95.8
+CN matched median/IQR: 76.0/[71.2 80.5]
+AD matched median/IQR: 74.7/[69.825 80.8  ]
+CN matched mean/std: 75.33505050505052/7.885105108570641
+AD matched mean/std: 75.05646464646465/7.071755859446706
+CN matched m/f: 589/401
+AD matched m/f: 606/384
+CN matched subjects/images: 159/990
+AD matched subjects/images: 201/990
+CN subjects matched m/f: 91/68
+AD subjects matched m/f: 102/99
