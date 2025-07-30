@@ -43,7 +43,7 @@ def build_selectfiles_workflow(studies, select_templates, name='selectfiles'):
 	), name=name + '__datasink_container')
 
 	# select files subworkflow
-	selectfiles_worklow = Workflow(name)
+	selectfiles_worklow = Workflow('select_files')
 	selectfiles_worklow.connect([
 		(study_identity_node, subject_identity_node,				[('study', 'study')]),
 		(subject_identity_node, selectfiles_node,						[
@@ -129,11 +129,12 @@ def preprocess(studies, select_templates, target_base_dir, processor_count=1):
 	), name='T1__roi')
 
 	# P: first T1
-	preprocess_workflow.connect([
-		(selectfiles_workflow, select_first_T1_node,	[('selectfiles__selectfiles.T1', 'inlist')]),
+	selectfirstT1_worklow = Workflow('select_first_T1')
+	selectfirstT1_worklow.connect([
+		# (selectfiles_workflow, select_first_T1_node,	[('selectfiles__selectfiles.T1', 'inlist')]),
 		(select_first_T1_node, reorient2std_node,			[('out', 'in_file')]),
 		(reorient2std_node, roi_node,									[('out_file', 'in_file')]),
-		(selectfiles_workflow, datasink_node,					[('selectfiles__datasink_container.container', 'container')]),
+		# (selectfiles_workflow, datasink_node,					[('selectfiles__datasink_container.container', 'container')]),
 	])
 
 	# standard_space_roi <input> <output> -maskMASK /opt/fsl/data/standard/MNI152_T1_2mm_brain_mask_dil -roiNONE
@@ -206,11 +207,12 @@ def preprocess(studies, select_templates, target_base_dir, processor_count=1):
 	# P: bias field correction and brain extraction
 	# we use N4 instead of N3
 	# based on FSL SIENAX https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/SIENA/UserGuide
-	preprocess_workflow.connect([
+	biasfieldcorrectionandbet_worklow = Workflow('biasfieldcorrection_and_bet')
+	biasfieldcorrectionandbet_worklow.connect([
 		# bias field correction
-		(roi_node, initial_bet_node,																		[('roi_file', 'in_file')]),
+		# (selectfirstT1_worklow, initial_bet_node,												[('T1__roi.roi_file', 'in_file')]),
 		(initial_bet_node, bias_field_estimation_node,									[('out_file', 'input_image')]),
-		(roi_node, bias_field_correction_node,													[('roi_file', 'in_file')]),
+		# (selectfirstT1_worklow, bias_field_correction_node,							[('T1__roi.roi_file', 'in_file')]),
 		(bias_field_estimation_node, bias_field_correction_node,				[('bias_image', 'operand_file')]),
 		
 		# bet
@@ -229,16 +231,16 @@ def preprocess(studies, select_templates, target_base_dir, processor_count=1):
 		(correct_final_brain_mask_node, apply_final_brain_mask_node,		[('out_file', 'mask_file')]),
 		(bet_node, apply_final_brain_mask_node,												 	[('out_file', 'in_file')]),
 
-		# datasink
-		(roi_node, datasink_node,													 							[('roi_file', 'T1')]),
-		# (initial_bet_node, datasink_node,																[('out_file', 'T1_initial_bet')]),
-		(bias_field_estimation_node, datasink_node,										 	[('bias_image', 'T1_bias_image')]),
-		(bias_field_correction_node, datasink_node,										 	[('out_file', 'T1_bias_corrected')]),
-		# (bet_node, datasink_node,																				[('out_file', 'T1_brain')]),
-		# (bet_node, datasink_node,																				[('mask_file', 'T1_brain_mask')]),
-		# (pairreg_node, datasink_node,																		[('out_matrix_file', 'T1_pairreg')]),
-		(correct_final_brain_mask_node, datasink_node,									[('out_file', 'stdmasked_brain_mask')]),		
-		# (apply_final_brain_mask_node, datasink_node,										[('out_file', 'stdmasked_brain')]),
+		# # datasink
+		# (roi_node, datasink_node,													 							[('roi_file', 'T1')]),
+		# # (initial_bet_node, datasink_node,																[('out_file', 'T1_initial_bet')]),
+		# (bias_field_estimation_node, datasink_node,										 	[('bias_image', 'T1_bias_image')]),
+		# (bias_field_correction_node, datasink_node,										 	[('out_file', 'T1_bias_corrected')]),
+		# # (bet_node, datasink_node,																				[('out_file', 'T1_brain')]),
+		# # (bet_node, datasink_node,																				[('mask_file', 'T1_brain_mask')]),
+		# # (pairreg_node, datasink_node,																		[('out_matrix_file', 'T1_pairreg')]),
+		# (correct_final_brain_mask_node, datasink_node,									[('out_file', 'stdmasked_brain_mask')]),		
+		# # (apply_final_brain_mask_node, datasink_node,										[('out_file', 'stdmasked_brain')]),
 	])
 
 	# flirt -cost corratio -dof 6 -in <input> -ref <reference> -out <output> -omat <outputmatrix>
@@ -278,63 +280,6 @@ def preprocess(studies, select_templates, target_base_dir, processor_count=1):
 		operation='bin',
 	), name='T1__final_nlin_brain_mask')
 
-	# P: reg T1 to MNI with dof6, dof12 and nlin
-	preprocess_workflow.connect([
-		# reg to MNI
-		(apply_final_brain_mask_node, reg_to_MNI_dof6_node,		 	[('out_file', 'in_file')]),
-		(apply_final_brain_mask_node, reg_to_MNI_dof12_node,		[('out_file', 'in_file')]),
-		(reg_to_MNI_dof12_node, reg_to_MNI_nlin_node,					 	[('out_matrix_file', 'affine_file')]),
-		(bias_field_correction_node, reg_to_MNI_nlin_node,			[('out_file', 'in_file')]),
-		(apply_final_brain_mask_node, apply_to_MNI_nlin_node,		[('out_file', 'in_file')]),
-		(reg_to_MNI_nlin_node, apply_to_MNI_nlin_node,					[('field_file', 'field_file')]),
-
-		# dof6, nlin brain mask
-		(reg_to_MNI_dof6_node, final_dof6_brain_mask_node,			[('out_file', 'in_file')]),
-		(apply_to_MNI_nlin_node, final_nlin_brain_mask_node,		[('out_file', 'in_file')]),
-
-		# datasink
-		(selectfiles_workflow, datasink_node,									 	[('selectfiles__selectfiles.MNI152_1mm_brain_mask', 'T1_1mm_brain_mask_nlin')]),
-		# (reg_to_MNI_dof6_node, datasink_node,										[('out_file', 'reg_dof6')]),
-		(reg_to_MNI_dof6_node, datasink_node,									 	[('out_matrix_file', 'regMatrix_dof6')]),
-		# (reg_to_MNI_dof12_node, datasink_node,									[('out_file', 'reg_dof12')]),
-		(reg_to_MNI_dof12_node, datasink_node,									[('out_matrix_file', 'regMatrix_dof12')]),
-		# (reg_to_MNI_nlin_node, datasink_node,									 	[('warped_file', 'reg_nlin')]),
-		(reg_to_MNI_nlin_node, datasink_node,									 	[('field_file', 'regFieldFile_nlin')]),
-		(reg_to_MNI_nlin_node, datasink_node,									 	[('fieldcoeff_file', 'regFieldCoeffFile_nlin')]),
-		# (apply_to_MNI_nlin_node, datasink_node,									[('out_file', 'regT1_nlin_1mm')]),
-		(final_dof6_brain_mask_node, datasink_node,						 	[('out_file', 'regBrainMask_to_MNI_dof6')]),
-		(final_nlin_brain_mask_node, datasink_node,						 	[('out_file', 'regBrainMask_to_MNI_nlin')]),
-	])	
-
-	# fslmath -ero -kernel boxv 5
-	erode_node = Node(ErodeImage(
-		kernel_shape='boxv',
-		kernel_size=5,
-	), name='T1__erode')
-
-	# fslmath -ero -kernel boxv 5
-	erode_dof6_node = Node(ErodeImage(
-		kernel_shape='boxv',
-		kernel_size=5,
-	), name='T1__erode_dof6')
-
-	# fslmath -ero -kernel boxv 5
-	erode_nlin_node = Node(ErodeImage(
-		kernel_shape='boxv',
-		kernel_size=5,
-	), name='T1__erode_nlin')
-
-	# P: erode brain masks
-	preprocess_workflow.connect([
-		(correct_final_brain_mask_node, erode_node,			[('out_file', 'in_file')]),
-		(final_dof6_brain_mask_node, erode_dof6_node,		[('out_file', 'in_file')]),
-		(final_nlin_brain_mask_node, erode_nlin_node,		[('out_file', 'in_file')]),
-
-		(erode_node, datasink_node,											[('out_file', 'regT1_erode')]),
-		(erode_dof6_node, datasink_node,								[('out_file', 'regT1_brainmask_erode_dof6')]),
-		(erode_nlin_node, datasink_node,								[('out_file', 'regT1_brainmask_erode_nlin')]),
-	])
-
 	# flirt -applyxfm -in <input> -ref <reference> -init <dof6_matrix> -out <output>
 	apply_T1_to_MNI_dof6_node = Node(ApplyXFM(
 		apply_xfm=True,
@@ -346,18 +291,139 @@ def preprocess(studies, select_templates, target_base_dir, processor_count=1):
 		ref_file='/opt/fsl/data/standard/MNI152_T1_1mm.nii.gz',
 	), name='T1__apply_T1_to_MNI_nlin')
 
-	# P: transform corrected T1 to MNI dof6 and nlin
-	preprocess_workflow.connect([		
-		(bias_field_correction_node, apply_T1_to_MNI_dof6_node,										[('out_file', 'in_file')]),
+	# P: reg T1 to MNI with dof6, dof12 and nlin
+	regtoMNI_worklow = Workflow('reg_T1_to_MNI152')
+	regtoMNI_worklow.connect([
+		# reg to MNI
+		# (apply_final_brain_mask_node, reg_to_MNI_dof6_node,		 	[('out_file', 'in_file')]),
+		# (apply_final_brain_mask_node, reg_to_MNI_dof12_node,		[('out_file', 'in_file')]),
+		(reg_to_MNI_dof12_node, reg_to_MNI_nlin_node,					 	[('out_matrix_file', 'affine_file')]),
+		# (bias_field_correction_node, reg_to_MNI_nlin_node,			[('out_file', 'in_file')]),
+		# (apply_final_brain_mask_node, apply_to_MNI_nlin_node,		[('out_file', 'in_file')]),
+		(reg_to_MNI_nlin_node, apply_to_MNI_nlin_node,					[('field_file', 'field_file')]),
+
+		# dof6, nlin brain mask
+		(reg_to_MNI_dof6_node, final_dof6_brain_mask_node,			[('out_file', 'in_file')]),
+		(apply_to_MNI_nlin_node, final_nlin_brain_mask_node,		[('out_file', 'in_file')]),
+
+		# transfer full T1s
+		# (bias_field_correction_node, apply_T1_to_MNI_dof6_node,										[('out_file', 'in_file')]),
 		(reg_to_MNI_dof6_node, apply_T1_to_MNI_dof6_node,													[('out_matrix_file', 'in_matrix_file')]),
 
-		(bias_field_correction_node, apply_T1_to_MNI_nlin_node,										[('out_file', 'in_file')]),
+		# (bias_field_correction_node, apply_T1_to_MNI_nlin_node,										[('out_file', 'in_file')]),
 		(reg_to_MNI_nlin_node, apply_T1_to_MNI_nlin_node,													[('field_file', 'field_file')]),
+		
 
-		# datasink
-		(apply_T1_to_MNI_dof6_node, datasink_node,																[('out_file', 'regT1_to_MNI_dof6')]),
-		(apply_T1_to_MNI_nlin_node, datasink_node,																[('out_file', 'regT1_to_MNI_nlin')]),
+		# # datasink
+		# (selectfiles_workflow, datasink_node,									 	[('selectfiles__selectfiles.MNI152_1mm_brain_mask', 'T1_1mm_brain_mask_nlin')]),
+		# # (reg_to_MNI_dof6_node, datasink_node,										[('out_file', 'reg_dof6')]),
+		# (reg_to_MNI_dof6_node, datasink_node,									 	[('out_matrix_file', 'regMatrix_dof6')]),
+		# # (reg_to_MNI_dof12_node, datasink_node,									[('out_file', 'reg_dof12')]),
+		# (reg_to_MNI_dof12_node, datasink_node,									[('out_matrix_file', 'regMatrix_dof12')]),
+		# # (reg_to_MNI_nlin_node, datasink_node,									 	[('warped_file', 'reg_nlin')]),
+		# (reg_to_MNI_nlin_node, datasink_node,									 	[('field_file', 'regFieldFile_nlin')]),
+		# (reg_to_MNI_nlin_node, datasink_node,									 	[('fieldcoeff_file', 'regFieldCoeffFile_nlin')]),
+		# # (apply_to_MNI_nlin_node, datasink_node,									[('out_file', 'regT1_nlin_1mm')]),
+		# (final_dof6_brain_mask_node, datasink_node,						 	[('out_file', 'regBrainMask_to_MNI_dof6')]),
+		# (final_nlin_brain_mask_node, datasink_node,						 	[('out_file', 'regBrainMask_to_MNI_nlin')]),
+	])	
+
+	# # fslmath -ero -kernel boxv 5
+	# erode_node = Node(ErodeImage(
+	# 	kernel_shape='boxv',
+	# 	kernel_size=5,
+	# ), name='T1__erode')
+
+	# # fslmath -ero -kernel boxv 5
+	# erode_dof6_node = Node(ErodeImage(
+	# 	kernel_shape='boxv',
+	# 	kernel_size=5,
+	# ), name='T1__erode_dof6')
+
+	# # fslmath -ero -kernel boxv 5
+	# erode_nlin_node = Node(ErodeImage(
+	# 	kernel_shape='boxv',
+	# 	kernel_size=5,
+	# ), name='T1__erode_nlin')
+
+	# # P: erode brain masks
+	# erodebrainmasks_worklow = Workflow('erode_brain_masks')
+	# erodebrainmasks_worklow.connect([
+	# 	(correct_final_brain_mask_node, erode_node,			[('out_file', 'in_file')]),
+	# 	(final_dof6_brain_mask_node, erode_dof6_node,		[('out_file', 'in_file')]),
+	# 	(final_nlin_brain_mask_node, erode_nlin_node,		[('out_file', 'in_file')]),
+
+	# 	# (erode_node, datasink_node,											[('out_file', 'regT1_erode')]),
+	# 	# (erode_dof6_node, datasink_node,								[('out_file', 'regT1_brainmask_erode_dof6')]),
+	# 	# (erode_nlin_node, datasink_node,								[('out_file', 'regT1_brainmask_erode_nlin')]),
+	# ])
+
+	# # flirt -applyxfm -in <input> -ref <reference> -init <dof6_matrix> -out <output>
+	# apply_T1_to_MNI_dof6_node = Node(ApplyXFM(
+	# 	apply_xfm=True,
+	# 	reference='/opt/fsl/data/standard/MNI152_T1_1mm_brain.nii.gz',
+	# ), name='T1__apply_T1_to_MNI_dof6')
+
+	# # applywarp -i <input> -o <output> -r <reference> -w <field_output>
+	# apply_T1_to_MNI_nlin_node = Node(ApplyWarp(
+	# 	ref_file='/opt/fsl/data/standard/MNI152_T1_1mm.nii.gz',
+	# ), name='T1__apply_T1_to_MNI_nlin')
+
+	# # P: transform corrected T1 to MNI dof6 and nlin
+	# transformT1toMNI_worklow = Workflow('transform_T1_to_MNI152')
+	# transformT1toMNI_worklow.connect([		
+	# 	(bias_field_correction_node, apply_T1_to_MNI_dof6_node,										[('out_file', 'in_file')]),
+	# 	(reg_to_MNI_dof6_node, apply_T1_to_MNI_dof6_node,													[('out_matrix_file', 'in_matrix_file')]),
+
+	# 	(bias_field_correction_node, apply_T1_to_MNI_nlin_node,										[('out_file', 'in_file')]),
+	# 	(reg_to_MNI_nlin_node, apply_T1_to_MNI_nlin_node,													[('field_file', 'field_file')]),
+
+	# 	# # datasink
+	# 	# (apply_T1_to_MNI_dof6_node, datasink_node,																[('out_file', 'regT1_to_MNI_dof6')]),
+	# 	# (apply_T1_to_MNI_nlin_node, datasink_node,																[('out_file', 'regT1_to_MNI_nlin')]),
+	# ])
+
+	# connect to main workflow
+	preprocess_workflow.connect([
+		# select files
+		# out
+		(selectfiles_workflow, datasink_node,														[('selectfiles__datasink_container.container', 'container')]),
+
+		# select first T1
+		# in
+		(selectfiles_workflow, selectfirstT1_worklow,										[('selectfiles__selectfiles.T1', 'T1__select_first_T1.inlist')]),
+		# out
+		(selectfirstT1_worklow, datasink_node,													[('T1__roi.roi_file', 'T1')]),
+
+		# bias field correction and bet
+		# in
+		(selectfirstT1_worklow, biasfieldcorrectionandbet_worklow,			[('T1__roi.roi_file', 'T1__initial_bet_node.in_file')]),
+		(selectfirstT1_worklow, biasfieldcorrectionandbet_worklow,			[('T1__roi.roi_file', 'T1__bias_field_correction_node.in_file')]),
+		# out
+		(biasfieldcorrectionandbet_worklow, datasink_node,							[('T1__bias_field_estimation_node.bias_image', 'T1_bias_image')]),
+		(biasfieldcorrectionandbet_worklow, datasink_node,							[('T1__bias_field_correction_node.out_file', 'T1_bias_corrected')]),
+		(biasfieldcorrectionandbet_worklow, datasink_node,							[('T1__correct_final_brain_mask_node.out_file', 'stdmasked_brain_mask')]),		
+		
+		# reg T1 to MNI152
+		# in
+		(biasfieldcorrectionandbet_worklow, regtoMNI_worklow,			[('T1__apply_final_brain_mask_node.out_file', 'T1__reg_to_MNI_dof6.in_file')]),
+		(biasfieldcorrectionandbet_worklow, regtoMNI_worklow,			[('T1__apply_final_brain_mask_node.out_file', 'T1__reg_to_MNI_dof12.in_file')]),
+		(biasfieldcorrectionandbet_worklow, regtoMNI_worklow,			[('T1__bias_field_correction_node.out_file', 'T1__reg_to_MNI_nlin.in_file')]),
+		(biasfieldcorrectionandbet_worklow, regtoMNI_worklow,			[('T1__apply_final_brain_mask_node.out_file', 'T1__apply_to_MNI_nlin.in_file')]),
+		(biasfieldcorrectionandbet_worklow, regtoMNI_worklow,			[('T1__bias_field_correction_node.out_file', 'T1__apply_T1_to_MNI_dof6.in_file')]),
+		(biasfieldcorrectionandbet_worklow, regtoMNI_worklow,			[('T1__bias_field_correction_node.out_file', 'T1__apply_T1_to_MNI_nlin.in_file')]),
+		#out
+		(selectfiles_workflow, datasink_node,					[('selectfiles__selectfiles.MNI152_1mm_brain_mask', 'T1_1mm_brain_mask_nlin')]),
+		(regtoMNI_worklow, datasink_node,							[('T1__reg_to_MNI_dof6.out_matrix_file', 'regMatrix_dof6')]),
+		(regtoMNI_worklow, datasink_node,							[('T1__reg_to_MNI_dof12.out_matrix_file', 'regMatrix_dof12')]),
+		(regtoMNI_worklow, datasink_node,							[('T1__reg_to_MNI_nlin.field_file', 'regFieldFile_nlin')]),
+		(regtoMNI_worklow, datasink_node,							[('T1__reg_to_MNI_nlin.fieldcoeff_file', 'regFieldCoeffFile_nlin')]),
+		(regtoMNI_worklow, datasink_node,						 	[('T1__final_dof6_brain_mask.out_file', 'regBrainMask_to_MNI_dof6')]),
+		(regtoMNI_worklow, datasink_node,						 	[('T1__final_nlin_brain_mask.out_file', 'regBrainMask_to_MNI_nlin')]),
+		(regtoMNI_worklow, datasink_node,							[('T1__apply_T1_to_MNI_dof6.out_file', 'regT1_to_MNI_dof6')]),
+		(regtoMNI_worklow, datasink_node,							[('T1__apply_T1_to_MNI_nlin.out_file', 'regT1_to_MNI_nlin')]),
 	])
 
+	biasfieldcorrectionandbet_worklow.write_graph(dotfilename='./graphs/biasfieldcorrectionandbet.dot', graph2use='hierarchical', simple_form=True)
+	regtoMNI_worklow.write_graph(dotfilename='./graphs/regtoMNI.dot', graph2use='hierarchical', simple_form=True)
 	preprocess_workflow.write_graph(dotfilename='./graphs/preprocess.dot', graph2use='orig', simple_form=True)
-	preprocess_workflow.run('MultiProc', plugin_args={'n_procs': processor_count})

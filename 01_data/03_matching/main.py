@@ -143,6 +143,9 @@ print('AD matched age min/max: ' + str(np.min(AD_matched_ages)) + '/' + str(np.m
 print('CN matched age median/IQR: ' + str(np.median(CN_matched_ages)) + '/' + str(np.percentile(CN_matched_ages, (25, 75))))
 print('AD matched age median/IQR: ' + str(np.median(AD_matched_ages)) + '/' + str(np.percentile(AD_matched_ages, (25, 75))))
 
+print('CN matched age 95% quantile: ' + str(np.median(CN_matched_ages)) + '/' + str(np.percentile(CN_matched_ages, (2.5, 97.5))))
+print('AD matched age 95% quantile: ' + str(np.median(AD_matched_ages)) + '/' + str(np.percentile(AD_matched_ages, (2.5, 97.5))))
+
 print('CN matched age mean/std: ' + str(np.mean(CN_matched_ages)) + '/' + str(np.std(CN_matched_ages)))
 print('AD matched age mean/std: ' + str(np.mean(AD_matched_ages)) + '/' + str(np.std(AD_matched_ages)))
 

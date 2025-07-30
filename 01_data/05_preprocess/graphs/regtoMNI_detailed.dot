@@ -1,0 +1,17 @@
+digraph structs {
+node [shape=record];
+reg_T1_to_MNI152T1__reg_to_MNI_dof12 [label="{IN}|{ T1__reg_to_MNI_dof12 | fsl |  }|{OUT|<outoutmatrixfile> out_matrix_file}"];
+reg_T1_to_MNI152T1__reg_to_MNI_dof6 [label="{IN}|{ T1__reg_to_MNI_dof6 | fsl |  }|{OUT|<outoutfile> out_file|<outoutmatrixfile> out_matrix_file}"];
+reg_T1_to_MNI152T1__reg_to_MNI_nlin [label="{IN|<inaffinefile> affine_file}|{ T1__reg_to_MNI_nlin | fsl |  }|{OUT|<outfieldfile> field_file}"];
+reg_T1_to_MNI152T1__final_dof6_brain_mask [label="{IN|<ininfile> in_file}|{ T1__final_dof6_brain_mask | fsl |  }|{OUT}"];
+reg_T1_to_MNI152T1__apply_T1_to_MNI_dof6 [label="{IN|<ininmatrixfile> in_matrix_file}|{ T1__apply_T1_to_MNI_dof6 | fsl |  }|{OUT}"];
+reg_T1_to_MNI152T1__apply_to_MNI_nlin [label="{IN|<infieldfile> field_file}|{ T1__apply_to_MNI_nlin | fsl |  }|{OUT|<outoutfile> out_file}"];
+reg_T1_to_MNI152T1__apply_T1_to_MNI_nlin [label="{IN|<infieldfile> field_file}|{ T1__apply_T1_to_MNI_nlin | fsl |  }|{OUT}"];
+reg_T1_to_MNI152T1__final_nlin_brain_mask [label="{IN|<ininfile> in_file}|{ T1__final_nlin_brain_mask | fsl |  }|{OUT}"];
+reg_T1_to_MNI152T1__apply_to_MNI_nlin:outoutfile:e -> reg_T1_to_MNI152T1__final_nlin_brain_mask:ininfile:w;
+reg_T1_to_MNI152T1__reg_to_MNI_dof12:outoutmatrixfile:e -> reg_T1_to_MNI152T1__reg_to_MNI_nlin:inaffinefile:w;
+reg_T1_to_MNI152T1__reg_to_MNI_dof6:outoutfile:e -> reg_T1_to_MNI152T1__final_dof6_brain_mask:ininfile:w;
+reg_T1_to_MNI152T1__reg_to_MNI_dof6:outoutmatrixfile:e -> reg_T1_to_MNI152T1__apply_T1_to_MNI_dof6:ininmatrixfile:w;
+reg_T1_to_MNI152T1__reg_to_MNI_nlin:outfieldfile:e -> reg_T1_to_MNI152T1__apply_T1_to_MNI_nlin:infieldfile:w;
+reg_T1_to_MNI152T1__reg_to_MNI_nlin:outfieldfile:e -> reg_T1_to_MNI152T1__apply_to_MNI_nlin:infieldfile:w;
+}

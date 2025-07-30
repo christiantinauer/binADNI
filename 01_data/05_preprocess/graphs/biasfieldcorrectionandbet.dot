@@ -1,0 +1,30 @@
+digraph biasfieldcorrection_and_bet{
+  label="biasfieldcorrection_and_bet";
+  biasfieldcorrection_and_bet_T1__initial_bet_node[label="T1__initial_bet_node"];
+  biasfieldcorrection_and_bet_T1__bias_field_estimation_node[label="T1__bias_field_estimation_node (ants)"];
+  biasfieldcorrection_and_bet_T1__bias_field_correction_node[label="T1__bias_field_correction_node (fsl)"];
+  biasfieldcorrection_and_bet_T1__no_neck_node[label="T1__no_neck_node"];
+  biasfieldcorrection_and_bet_T1__bet[label="T1__bet (fsl)"];
+  biasfieldcorrection_and_bet_T1__pairreg[label="T1__pairreg"];
+  biasfieldcorrection_and_bet_T1__invert_node[label="T1__invert_node (fsl)"];
+  biasfieldcorrection_and_bet_T1__apply_std_brain_mask_to_T1[label="T1__apply_std_brain_mask_to_T1 (fsl)"];
+  biasfieldcorrection_and_bet_T1__threshold_brain_mask_node[label="T1__threshold_brain_mask_node (fsl)"];
+  biasfieldcorrection_and_bet_T1__final_brain_mask_node[label="T1__final_brain_mask_node (fsl)"];
+  biasfieldcorrection_and_bet_T1__correct_final_brain_mask_node[label="T1__correct_final_brain_mask_node (fsl)"];
+  biasfieldcorrection_and_bet_T1__apply_final_brain_mask_node[label="T1__apply_final_brain_mask_node (fsl)"];
+  biasfieldcorrection_and_bet_T1__initial_bet_node -> biasfieldcorrection_and_bet_T1__bias_field_estimation_node;
+  biasfieldcorrection_and_bet_T1__bias_field_estimation_node -> biasfieldcorrection_and_bet_T1__bias_field_correction_node;
+  biasfieldcorrection_and_bet_T1__bias_field_correction_node -> biasfieldcorrection_and_bet_T1__no_neck_node;
+  biasfieldcorrection_and_bet_T1__no_neck_node -> biasfieldcorrection_and_bet_T1__bet;
+  biasfieldcorrection_and_bet_T1__bet -> biasfieldcorrection_and_bet_T1__pairreg;
+  biasfieldcorrection_and_bet_T1__bet -> biasfieldcorrection_and_bet_T1__pairreg;
+  biasfieldcorrection_and_bet_T1__bet -> biasfieldcorrection_and_bet_T1__apply_std_brain_mask_to_T1;
+  biasfieldcorrection_and_bet_T1__bet -> biasfieldcorrection_and_bet_T1__correct_final_brain_mask_node;
+  biasfieldcorrection_and_bet_T1__bet -> biasfieldcorrection_and_bet_T1__apply_final_brain_mask_node;
+  biasfieldcorrection_and_bet_T1__pairreg -> biasfieldcorrection_and_bet_T1__invert_node;
+  biasfieldcorrection_and_bet_T1__invert_node -> biasfieldcorrection_and_bet_T1__apply_std_brain_mask_to_T1;
+  biasfieldcorrection_and_bet_T1__apply_std_brain_mask_to_T1 -> biasfieldcorrection_and_bet_T1__threshold_brain_mask_node;
+  biasfieldcorrection_and_bet_T1__threshold_brain_mask_node -> biasfieldcorrection_and_bet_T1__final_brain_mask_node;
+  biasfieldcorrection_and_bet_T1__final_brain_mask_node -> biasfieldcorrection_and_bet_T1__correct_final_brain_mask_node;
+  biasfieldcorrection_and_bet_T1__correct_final_brain_mask_node -> biasfieldcorrection_and_bet_T1__apply_final_brain_mask_node;
+}

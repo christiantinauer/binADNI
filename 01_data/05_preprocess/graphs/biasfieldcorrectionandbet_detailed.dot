@@ -1,0 +1,30 @@
+digraph structs {
+node [shape=record];
+biasfieldcorrection_and_betT1__initial_bet_node [label="{IN}|{ T1__initial_bet_node |  |  }|{OUT|<outoutfile> out_file}"];
+biasfieldcorrection_and_betT1__bias_field_estimation_node [label="{IN|<ininputimage> input_image}|{ T1__bias_field_estimation_node | ants |  }|{OUT|<outbiasimage> bias_image}"];
+biasfieldcorrection_and_betT1__bias_field_correction_node [label="{IN|<inoperandfile> operand_file}|{ T1__bias_field_correction_node | fsl |  }|{OUT|<outoutfile> out_file}"];
+biasfieldcorrection_and_betT1__no_neck_node [label="{IN|<ininfile> in_file}|{ T1__no_neck_node |  |  }|{OUT|<outoutfile> out_file}"];
+biasfieldcorrection_and_betT1__bet [label="{IN|<ininfile> in_file}|{ T1__bet | fsl |  }|{OUT|<outmaskfile> mask_file|<outoutfile> out_file|<outskullfile> skull_file}"];
+biasfieldcorrection_and_betT1__pairreg [label="{IN|<ininbrainfile> in_brain_file|<ininskullfile> in_skull_file}|{ T1__pairreg |  |  }|{OUT|<outoutmatrixfile> out_matrix_file}"];
+biasfieldcorrection_and_betT1__invert_node [label="{IN|<ininfile> in_file}|{ T1__invert_node | fsl |  }|{OUT|<outoutfile> out_file}"];
+biasfieldcorrection_and_betT1__apply_std_brain_mask_to_T1 [label="{IN|<ininmatrixfile> in_matrix_file|<inreference> reference}|{ T1__apply_std_brain_mask_to_T1 | fsl |  }|{OUT|<outoutfile> out_file}"];
+biasfieldcorrection_and_betT1__threshold_brain_mask_node [label="{IN|<ininfile> in_file}|{ T1__threshold_brain_mask_node | fsl |  }|{OUT|<outoutfile> out_file}"];
+biasfieldcorrection_and_betT1__final_brain_mask_node [label="{IN|<ininfile> in_file}|{ T1__final_brain_mask_node | fsl |  }|{OUT|<outoutfile> out_file}"];
+biasfieldcorrection_and_betT1__correct_final_brain_mask_node [label="{IN|<ininfile> in_file|<inmaskfile> mask_file}|{ T1__correct_final_brain_mask_node | fsl |  }|{OUT|<outoutfile> out_file}"];
+biasfieldcorrection_and_betT1__apply_final_brain_mask_node [label="{IN|<ininfile> in_file|<inmaskfile> mask_file}|{ T1__apply_final_brain_mask_node | fsl |  }|{OUT}"];
+biasfieldcorrection_and_betT1__apply_std_brain_mask_to_T1:outoutfile:e -> biasfieldcorrection_and_betT1__threshold_brain_mask_node:ininfile:w;
+biasfieldcorrection_and_betT1__bet:outmaskfile:e -> biasfieldcorrection_and_betT1__correct_final_brain_mask_node:ininfile:w;
+biasfieldcorrection_and_betT1__bet:outoutfile:e -> biasfieldcorrection_and_betT1__apply_final_brain_mask_node:ininfile:w;
+biasfieldcorrection_and_betT1__bet:outoutfile:e -> biasfieldcorrection_and_betT1__apply_std_brain_mask_to_T1:inreference:w;
+biasfieldcorrection_and_betT1__bet:outoutfile:e -> biasfieldcorrection_and_betT1__pairreg:ininbrainfile:w;
+biasfieldcorrection_and_betT1__bet:outskullfile:e -> biasfieldcorrection_and_betT1__pairreg:ininskullfile:w;
+biasfieldcorrection_and_betT1__bias_field_correction_node:outoutfile:e -> biasfieldcorrection_and_betT1__no_neck_node:ininfile:w;
+biasfieldcorrection_and_betT1__bias_field_estimation_node:outbiasimage:e -> biasfieldcorrection_and_betT1__bias_field_correction_node:inoperandfile:w;
+biasfieldcorrection_and_betT1__correct_final_brain_mask_node:outoutfile:e -> biasfieldcorrection_and_betT1__apply_final_brain_mask_node:inmaskfile:w;
+biasfieldcorrection_and_betT1__final_brain_mask_node:outoutfile:e -> biasfieldcorrection_and_betT1__correct_final_brain_mask_node:inmaskfile:w;
+biasfieldcorrection_and_betT1__initial_bet_node:outoutfile:e -> biasfieldcorrection_and_betT1__bias_field_estimation_node:ininputimage:w;
+biasfieldcorrection_and_betT1__invert_node:outoutfile:e -> biasfieldcorrection_and_betT1__apply_std_brain_mask_to_T1:ininmatrixfile:w;
+biasfieldcorrection_and_betT1__no_neck_node:outoutfile:e -> biasfieldcorrection_and_betT1__bet:ininfile:w;
+biasfieldcorrection_and_betT1__pairreg:outoutmatrixfile:e -> biasfieldcorrection_and_betT1__invert_node:ininfile:w;
+biasfieldcorrection_and_betT1__threshold_brain_mask_node:outoutfile:e -> biasfieldcorrection_and_betT1__final_brain_mask_node:ininfile:w;
+}

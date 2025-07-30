@@ -1,0 +1,17 @@
+digraph reg_T1_to_MNI152{
+  label="reg_T1_to_MNI152";
+  reg_T1_to_MNI152_T1__reg_to_MNI_dof12[label="T1__reg_to_MNI_dof12 (fsl)"];
+  reg_T1_to_MNI152_T1__reg_to_MNI_dof6[label="T1__reg_to_MNI_dof6 (fsl)"];
+  reg_T1_to_MNI152_T1__reg_to_MNI_nlin[label="T1__reg_to_MNI_nlin (fsl)"];
+  reg_T1_to_MNI152_T1__final_dof6_brain_mask[label="T1__final_dof6_brain_mask (fsl)"];
+  reg_T1_to_MNI152_T1__apply_T1_to_MNI_dof6[label="T1__apply_T1_to_MNI_dof6 (fsl)"];
+  reg_T1_to_MNI152_T1__apply_to_MNI_nlin[label="T1__apply_to_MNI_nlin (fsl)"];
+  reg_T1_to_MNI152_T1__apply_T1_to_MNI_nlin[label="T1__apply_T1_to_MNI_nlin (fsl)"];
+  reg_T1_to_MNI152_T1__final_nlin_brain_mask[label="T1__final_nlin_brain_mask (fsl)"];
+  reg_T1_to_MNI152_T1__reg_to_MNI_dof12 -> reg_T1_to_MNI152_T1__reg_to_MNI_nlin;
+  reg_T1_to_MNI152_T1__reg_to_MNI_dof6 -> reg_T1_to_MNI152_T1__final_dof6_brain_mask;
+  reg_T1_to_MNI152_T1__reg_to_MNI_dof6 -> reg_T1_to_MNI152_T1__apply_T1_to_MNI_dof6;
+  reg_T1_to_MNI152_T1__reg_to_MNI_nlin -> reg_T1_to_MNI152_T1__apply_to_MNI_nlin;
+  reg_T1_to_MNI152_T1__reg_to_MNI_nlin -> reg_T1_to_MNI152_T1__apply_T1_to_MNI_nlin;
+  reg_T1_to_MNI152_T1__apply_to_MNI_nlin -> reg_T1_to_MNI152_T1__final_nlin_brain_mask;
+}

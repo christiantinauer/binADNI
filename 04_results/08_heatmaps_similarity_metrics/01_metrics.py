@@ -30,10 +30,10 @@ for heatmap_name in os.listdir(reference_model_heatmaps_path):
     reference_model_heatmap_names[heatmap_name[0:heatmap_name.rfind('__')]] = heatmap_name
 
 for model_name in [
-  'T1_@MNI_nlin_bin01375',
-  'T1_@MNI_nlin_bet_bin01375',   
-  'T1_@MNI_nlin_bin0275',        
-  'T1_@MNI_nlin_bet_bin0275',    
+  # 'T1_@MNI_nlin_bin01375',
+  # 'T1_@MNI_nlin_bet_bin01375',   
+  # 'T1_@MNI_nlin_bin0275',        
+  # 'T1_@MNI_nlin_bet_bin0275',    
   'T1_@MNI_nlin_bin04125',       
   'T1_@MNI_nlin_bet_bin04125',   
   'T1_@MNI_nlin',                
