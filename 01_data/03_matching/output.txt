@@ -1,12 +1,30 @@
-CN matched min/max: 55.7/91.5
-AD matched min/max: 56.3/95.8
-CN matched median/IQR: 76.0/[71.2 80.5]
-AD matched median/IQR: 74.7/[69.825 80.8  ]
-CN matched mean/std: 75.33505050505052/7.885105108570641
-AD matched mean/std: 75.05646464646465/7.071755859446706
-CN matched m/f: 589/401
-AD matched m/f: 606/384
-CN matched subjects/images: 159/990
-AD matched subjects/images: 201/990
-CN subjects matched m/f: 91/68
-AD subjects matched m/f: 102/99
+CN matched age min/max: 56.3/95.8
+AD matched age min/max: 55.7/91.5
+CN matched age median/IQR: 74.7/[69.825 80.8  ]
+AD matched age median/IQR: 76.0/[71.2 80.5]
+CN matched age 95% quantile: 74.7/[62.235 86.1  ]
+AD matched age 95% quantile: 76.0/[58.3 89.7]
+CN matched age mean/std: 75.05646464646465/7.071755859446706
+AD matched age mean/std: 75.33505050505052/7.885105108570641
+CN matched sex m/f: 606/384
+AD matched sex m/f: 589/401
+CN matched subjects/images: 201/990
+AD matched subjects/images: 159/990
+CN subjects matched m/f: 102/99
+AD subjects matched m/f: 91/68
+CN subjects matched cdr 0.0/0.5/1.0/1.5/2.0/empty: 171/13/0/0/0/17
+AD subjects matched cdr 0.0/0.5/1.0/1.5/2.0/empty: 0/35/67/0/9/48
+CN matched mmse min/max: 24.0/30.0
+AD matched mmse min/max: 4.0/30.0
+CN matched mmse median/IQR: 29.0/[28. 30.]
+AD matched mmse median/IQR: 22.0/[20.  24.5]
+CN matched mmse mean/std: 28.913513/1.2316023
+AD matched mmse mean/std: 21.864864/3.8119926
+CN matched mmse no value count: 16
+AD matched mmse no value count: 48
+CN subjects matched APOE ε2/ε2 ε2/ε3 ε2/ε4 ε3/ε3 ε3/ε4 ε4/ε4 empty: 1 20 1 112 49 5 13
+AD subjects matched APOE ε2/ε2 ε2/ε3 ε2/ε4 ε3/ε3 ε3/ε4 ε4/ε4 empty: 1 5 2 41 68 29 13
+CN matched education min/max: 12/20
+AD matched education min/max: 9/20
+CN matched education mean/std: 16.66169154228856/2.512649614243561
+AD matched education mean/std: 15.748427672955975/2.7287625998847544

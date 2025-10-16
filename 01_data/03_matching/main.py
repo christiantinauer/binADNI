@@ -4,7 +4,9 @@ import functools
 import numpy as np
 import pandas
 from psmpy import PsmPy
+from psmpy.functions import cohenD
 import matplotlib.pyplot as plt
+import seaborn as sns
 
 wanted_visits = [
 	# 'ADNI Baseline',
@@ -40,6 +42,16 @@ wanted_visits = [
   # 'Unscheduled',
 ]
 
+apoe_to_index = {
+	'2/2': 1,
+	'2/3': 2,
+	'2/4': 3,
+	'3/3': 4,
+	'3/4': 5,
+	'4/4': 6,
+	'/': 7
+}
+
 selected_image_ids =	[]
 with open('../01_gather/03_ADNI_selected.csv', 'r') as csvfile:
 	reader = csv.reader(csvfile, delimiter=',', quotechar='"')
@@ -49,10 +61,40 @@ with open('../01_gather/03_ADNI_selected.csv', 'r') as csvfile:
 		image_id = row[0]
 		selected_image_ids.append(image_id)
 
+rid_to_education_years =	{}
+with open('../02_selection/00_PTDEMOG.csv', 'r') as csvfile:
+	reader = csv.reader(csvfile, delimiter=',', quotechar='"')
+	header_row = next(reader, None)
+	# print(header_row)
+	# exit()
+	
+	for row in reader:
+		phase = row[0]
+		if phase != 'ADNI2':
+			continue
+
+		rid = row[2].rjust(4, '0')
+		education_in_years = row[14]
+		if education_in_years == '':
+			continue
+		
+		if rid in rid_to_education_years and education_in_years != rid_to_education_years[rid]:
+			print(rid)
+			exit()
+
+		rid_to_education_years[rid] = education_in_years
+
+# print(rid_to_education_years)
+# exit()
+
 ids = []
 classes = []
 ages = []
 sexes = []
+apoes = []
+apoes_e4_carrier = []
+apoes_e2_carrier = []
+education = []
 image_ids_to_features = {}
 subject_ids_to_dementia_scores = {}
 with open('../01_gather/00_idaSearch_11_30_2022.csv', 'r') as csvfile:
@@ -61,8 +103,12 @@ with open('../01_gather/00_idaSearch_11_30_2022.csv', 'r') as csvfile:
 	next(reader, None)
 	for row in reader:
 		subject_id = row[0]
+		rid = subject_id[len('002_S_'):]
 		sex = 1 if row[3] == 'M' else 2
 		research_group = row[5]
+		apoe = row[6] + '/' + row[7]
+		apoe_e4_carrier = 2 if row[6] == '4' else 1 if row[7] == '4' else -1 if row[6] == '' else 0
+		apoe_e2_carrier = 1 if row[6] == '2' else -1 if row[6] == '' else 0
 		visit = row[8]
 		age = float(row[11])
 		cdr = row[12]
@@ -73,6 +119,8 @@ with open('../01_gather/00_idaSearch_11_30_2022.csv', 'r') as csvfile:
 			subject_id_dementia_scores = {
 				'cdr': [],
 				'mmse': [],
+				'apoe': [],
+				'education': []
 			}
 			subject_ids_to_dementia_scores[subject_id] = subject_id_dementia_scores
 		else:
@@ -80,7 +128,9 @@ with open('../01_gather/00_idaSearch_11_30_2022.csv', 'r') as csvfile:
 		
 		subject_id_dementia_scores['cdr'].append(cdr)
 		subject_id_dementia_scores['mmse'].append(mmse)
-
+		subject_id_dementia_scores['apoe'].append(apoe)
+		subject_id_dementia_scores['education'].append(rid_to_education_years[rid] if rid in rid_to_education_years else '')
+		
 		if image_id not in selected_image_ids or visit not in wanted_visits:
 			continue
 
@@ -88,16 +138,20 @@ with open('../01_gather/00_idaSearch_11_30_2022.csv', 'r') as csvfile:
 		classes.append(1 if research_group == 'AD' else 0)
 		ages.append(age)
 		sexes.append(sex)
+		apoes.append(apoe_to_index[apoe])
+		apoes_e4_carrier.append(apoe_e4_carrier)
+		apoes_e2_carrier.append(apoe_e2_carrier)
+		education.append(rid_to_education_years[rid] if rid in rid_to_education_years else '')
 		image_ids_to_features[image_id] = {
 			'sex': sex,
 			'age': age,
 			'subject_id': subject_id,
 		}
 
-data = {'id': ids, 'class': classes, 'age': ages, 'sex': sexes}
+data = {'id': ids, 'class': classes, 'age': ages, 'sex': sexes, 'apoe': apoes, 'apoe_e4_carrier': apoes_e4_carrier, 'apoe_e2_carrier': apoes_e2_carrier, 'education': education}
 df = pandas.DataFrame(data=data)
 
-psm = PsmPy(df, treatment='class', indx='id', exclude=[])
+psm = PsmPy(df, treatment='class', indx='id', exclude=['apoe', 'apoe_e4_carrier', 'apoe_e2_carrier', 'education'])
 psm.logistic_ps(balance=True)
 
 # print(psm.predicted_data)
@@ -108,6 +162,8 @@ psm.plot_match(Title='Side by side matched controls', Ylabel='Count', Xlabel= 'P
 plt.clf()
 psm.effect_size_plot(title='Standardized Mean differences across covariates before and after matching', before_color='#FCB754', after_color='#3EC8FB', save=True)
 plt.clf()
+
+# print(psm.effect_size)
 
 # df_matched = psm.df_matched
 # print(df_matched)
@@ -182,6 +238,14 @@ def reducer_mmse(a, s):
 	a[s] = functools.reduce(reducer_dementia_scores_list, subject_ids_to_dementia_scores[s]['mmse'], '')
 	return a
 
+def reducer_apoe(a, s):
+	a[s] = functools.reduce(reducer_dementia_scores_list, subject_ids_to_dementia_scores[s]['apoe'], '')
+	return a
+
+def reducer_education(a, s):
+	a[s] = functools.reduce(reducer_dementia_scores_list, subject_ids_to_dementia_scores[s]['education'], '')
+	return a
+
 CN_matched_subject_cdr = np.array(list(functools.reduce(reducer_cdr, CN_matched_subjects, {}).values()))
 AD_matched_subject_cdr = np.array(list(functools.reduce(reducer_cdr, AD_matched_subjects, {}).values()))
 
@@ -214,3 +278,78 @@ print('AD matched mmse mean/std: ' + str(np.mean(AD_matched_subject_mmse)) + '/'
 
 print('CN matched mmse no value count: ' + str(len(CN_matched_subjects) - len(CN_matched_subject_mmse)))
 print('AD matched mmse no value count: ' + str(len(AD_matched_subjects) - len(AD_matched_subject_mmse)))
+
+CN_matched_subject_apoe = np.array(list(functools.reduce(reducer_apoe, CN_matched_subjects, {}).values()))
+AD_matched_subject_apoe = np.array(list(functools.reduce(reducer_apoe, AD_matched_subjects, {}).values()))
+
+# print(set(CN_matched_subject_apoe))
+
+print('CN subjects matched APOE ε2/ε2 ε2/ε3 ε2/ε4 ε3/ε3 ε3/ε4 ε4/ε4 empty: ' +\
+	str(np.count_nonzero(CN_matched_subject_apoe == '2/2')) + ' ' +\
+	str(np.count_nonzero(CN_matched_subject_apoe == '2/3')) + ' ' +\
+	str(np.count_nonzero(CN_matched_subject_apoe == '2/4')) + ' ' +\
+	str(np.count_nonzero(CN_matched_subject_apoe == '3/3')) + ' ' +\
+	str(np.count_nonzero(CN_matched_subject_apoe == '3/4')) + ' ' +\
+	str(np.count_nonzero(CN_matched_subject_apoe == '4/4')) + ' ' +\
+	str(np.count_nonzero(CN_matched_subject_apoe == '/')))
+
+# print(set(AD_matched_subject_apoe))
+
+print('AD subjects matched APOE ε2/ε2 ε2/ε3 ε2/ε4 ε3/ε3 ε3/ε4 ε4/ε4 empty: ' +\
+	str(np.count_nonzero(AD_matched_subject_apoe == '2/2')) + ' ' +\
+	str(np.count_nonzero(AD_matched_subject_apoe == '2/3')) + ' ' +\
+	str(np.count_nonzero(AD_matched_subject_apoe == '2/4')) + ' ' +\
+	str(np.count_nonzero(AD_matched_subject_apoe == '3/3')) + ' ' +\
+	str(np.count_nonzero(AD_matched_subject_apoe == '3/4')) + ' ' +\
+	str(np.count_nonzero(AD_matched_subject_apoe == '4/4')) + ' ' +\
+	str(np.count_nonzero(AD_matched_subject_apoe == '/')))
+
+# education
+CN_matched_subject_education = np.array(list(functools.reduce(reducer_education, CN_matched_subjects, {}).values())).astype(np.int32)
+AD_matched_subject_education = np.array(list(functools.reduce(reducer_education, AD_matched_subjects, {}).values())).astype(np.int32)
+
+print('CN matched education min/max: ' + str(np.min(CN_matched_subject_education)) + '/' + str(np.max(CN_matched_subject_education)))
+print('AD matched education min/max: ' + str(np.min(AD_matched_subject_education)) + '/' + str(np.max(AD_matched_subject_education)))
+
+print('CN matched education mean/std: ' + str(np.mean(CN_matched_subject_education)) + '/' + str(np.std(CN_matched_subject_education)))
+print('AD matched education mean/std: ' + str(np.mean(AD_matched_subject_education)) + '/' + str(np.std(AD_matched_subject_education)))
+
+# effect sizes plot
+df_preds_after = psm.df_matched[[psm.treatment] + psm.xvars]
+df_preds_b4 = psm.data[[psm.treatment] + psm.xvars]
+df_preds_after_float = df_preds_after.astype(float)
+df_preds_b4_float = df_preds_b4.astype(float)
+
+data = []
+for cl in psm.xvars:
+	data.append([cl, 'before', cohenD(
+		df_preds_b4_float, psm.treatment, cl)])
+	data.append([cl, 'after', cohenD(
+		df_preds_after_float, psm.treatment, cl)])
+
+# effect size for not used variables
+df_preds_after = df[df['id'].isin(CN_matched) | df['id'].isin(AD_matched)]
+df_preds_b4 = df
+df_preds_after_float = df_preds_after.astype(float)
+df_preds_b4_float = df_preds_b4.astype(float)
+
+data.append(['apoe_e4_carrier', 'before', cohenD(df_preds_b4_float, psm.treatment, 'apoe_e4_carrier')])
+data.append(['apoe_e4_carrier', 'after', cohenD(df_preds_after_float, psm.treatment, 'apoe_e4_carrier')])
+
+data.append(['apoe_e2_carrier', 'before', cohenD(df_preds_b4_float, psm.treatment, 'apoe_e2_carrier')])
+data.append(['apoe_e2_carrier', 'after', cohenD(df_preds_after_float, psm.treatment, 'apoe_e2_carrier')])
+
+data.append(['education', 'before', cohenD(df_preds_b4_float, psm.treatment, 'education')])
+data.append(['education', 'after', cohenD(df_preds_after_float, psm.treatment, 'education')])
+
+effect_size = pandas.DataFrame(data, columns=['Variable', 'matching', 'Effect size'])
+
+plt.clf()
+sns.set_style("white")
+before_color='#FCB754'
+after_color='#3EC8FB'
+sns_plot = sns.barplot(data=effect_size, y='Variable', x='Effect size', hue='matching', palette=[
+  before_color, after_color], orient='h')
+sns_plot.set(title='Standardized mean differences across covariates before and after matching')
+sns_plot.figure.savefig('effect_size_all.png', dpi=250, bbox_inches='tight')
+plt.clf()
