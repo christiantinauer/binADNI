@@ -208,3 +208,100 @@ print('AD subjects matched cdr 0.0/0.5/1.0/1.5/2.0/2.5/3.0/empty: ' +\
   str(np.count_nonzero(ProDem_cdr_scores == '2.5')) + '/' +\
   str(np.count_nonzero(ProDem_cdr_scores == '3.0')) + '/' +\
   str(len(ProDem_ids_baseline) - len(ProDem_cdr_scores)))
+
+# APOE and Education
+APSPF_apoe4_workbook = load_workbook('ASPSFam_edu_ApoE.xlsx', data_only=True)
+ASPSF_apoe4_worksheet = APSPF_apoe4_workbook['ASPSFam_edu_ApoE']
+
+ASPSF_education_in_years = []
+ASPSF_apoe = []
+
+for row_index in range(1, 421):
+  subject_id = f'{int(ASPSF_apoe4_worksheet.cell(row=row_index + 1, column=1).value):06d}'
+  education = ASPSF_apoe4_worksheet.cell(row=row_index + 1, column=2).value
+  apoe = str(ASPSF_apoe4_worksheet.cell(row=row_index + 1, column=3).value) + '/' + str(ASPSF_apoe4_worksheet.cell(row=row_index + 1, column=4).value)
+  
+  # 1 = Grundschule (Volks + Hauptschule) = 9 Jahre
+  # 2 = Lehre = 10 Jahre
+  # 3 = AHS / BHS /LBA (LBA =Lehrerbildungsanstalt) = 13 Jahre
+  # 4 = Hochschule = 18 Jahre
+  education_in_years = None
+  if education == 1:
+    education_in_years = 9
+  elif education == 2:
+    education_in_years = 10
+  elif education == 3:
+    education_in_years = 13
+  elif education == 4:
+    education_in_years = 18
+
+  if subject_id in ASPSF_ids_baseline:
+    if education_in_years is not None:
+      ASPSF_education_in_years.append(education_in_years)
+    
+    ASPSF_apoe.append(apoe)
+
+print('CN matched education in years mean/std: ' + str(np.mean(ASPSF_education_in_years)) + '/' + str(np.std(ASPSF_education_in_years)))
+print('CN matched education in years min/max: ' + str(np.min(ASPSF_education_in_years)) + '/' + str(np.max(ASPSF_education_in_years)))
+print('CN matched education in years n/a: ' + str(len(ASPSF_ids_baseline) - len(ASPSF_education_in_years)))
+
+ASPSF_apoe = np.array(ASPSF_apoe)
+# print(ASPSF_apoe)
+
+print('CN subjects matched APOE ε2/ε2 ε2/ε3 ε2/ε4 ε3/ε3 ε3/ε4 ε4/ε4 empty: ' +\
+	str(np.count_nonzero(ASPSF_apoe == '2/2')) + ' ' +\
+	str(np.count_nonzero(ASPSF_apoe == '2/3')) + ' ' +\
+	str(np.count_nonzero(ASPSF_apoe == '2/4')) + ' ' +\
+	str(np.count_nonzero(ASPSF_apoe == '3/3')) + ' ' +\
+	str(np.count_nonzero(ASPSF_apoe == '3/4')) + ' ' +\
+	str(np.count_nonzero(ASPSF_apoe == '4/4')) + ' ' +\
+	str(np.count_nonzero(ASPSF_apoe == '#NULL!/#NULL!')))
+
+ProDem_apoe_workbook = load_workbook('PRODEM_edu_apoe.xlsx', data_only=True)
+ProDem_apoe_worksheet = ProDem_apoe_workbook['PRODEM_edu_apoe']
+
+ProDem_education_in_years = []
+ProDem_apoe = []
+
+for row_index in range(1, 853):
+  subject_id = str(ProDem_apoe_worksheet.cell(row=row_index + 1, column=1).value)
+  education = ProDem_apoe_worksheet.cell(row=row_index + 1, column=2).value
+  apoe = str(ProDem_apoe_worksheet.cell(row=row_index + 1, column=3).value) + '/' + str(ProDem_apoe_worksheet.cell(row=row_index + 1, column=4).value)
+
+  # 1 = Gundschule (Volks + Hauptschule) = 9 Jahre
+  # 2 =  Lehre =  10 Jahre
+  # 3 = AHS = 13 Jahre
+  # 4 = BHS = 13 Jahre
+  # 5 = LBA (Lehrerbildungsanstalt) = 13 Jahre
+  # 6 = Hochschule = 18 Jahre
+  education_in_years = None
+  if education == 1:
+    education_in_years = 9
+  elif education == 2:
+    education_in_years = 10
+  elif education == 3 or education == 4 or education == 5:
+    education_in_years = 13
+  elif education == 6:
+    education_in_years = 18
+
+  if subject_id in ProDem_ids_baseline:
+    if education_in_years is not None:
+      ProDem_education_in_years.append(education_in_years)
+    
+    ProDem_apoe.append(apoe)
+
+print('AD matched education in years mean/std: ' + str(np.mean(ProDem_education_in_years)) + '/' + str(np.std(ProDem_education_in_years)))
+print('AD matched education in years min/max: ' + str(np.min(ProDem_education_in_years)) + '/' + str(np.max(ProDem_education_in_years)))
+print('AD matched education in years n/a: ' + str(len(ProDem_ids_baseline) - len(ProDem_education_in_years)))
+
+ProDem_apoe = np.array(ProDem_apoe)
+# print(ProDem_apoe)
+
+print('AD subjects matched APOE ε2/ε2 ε2/ε3 ε2/ε4 ε3/ε3 ε3/ε4 ε4/ε4 empty: ' +\
+	str(np.count_nonzero(ProDem_apoe == '2/2')) + ' ' +\
+	str(np.count_nonzero(ProDem_apoe == '2/3')) + ' ' +\
+	str(np.count_nonzero(ProDem_apoe == '2/4')) + ' ' +\
+	str(np.count_nonzero(ProDem_apoe == '3/3')) + ' ' +\
+	str(np.count_nonzero(ProDem_apoe == '3/4')) + ' ' +\
+	str(np.count_nonzero(ProDem_apoe == '4/4')) + ' ' +\
+	str(np.count_nonzero(ProDem_apoe == '#NULL!/#NULL!')))
